@@ -257,33 +257,9 @@ class StandaloneReaderWrapper:
         return type_list
 
 
-async def Search(self, request: SearchRequest, retry: bool = False) -> SearchResponse:
-    try:
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            self.executor, self.reader.search, request.SerializeToString()
-        )
-        pb_bytes = bytes(result)
-        pb = SearchResponse()
-        pb.ParseFromString(pb_bytes)
-        return pb
-    except IndexNodeException as exc:
-        if "IO error" not in str(exc):
-            # ignore any other error
-            raise
-
-        # try some mitigations...
-        logger.error(f"IndexNodeException in Search: {request}", exc_info=True)
-        if not retry:
-            # reinit?
-            self.reader = NodeReader()
-            return await self.Search(request, retry=True)
-        else:
-            raise
-
-
 class StandaloneWriterWrapper:
     writer: NodeWriter
+    gc_threshold = 100
 
     def __init__(self):
         os.makedirs(settings.data_path, exist_ok=True)
@@ -293,21 +269,22 @@ class StandaloneWriterWrapper:
             )
         self.writer = NodeWriter()
         self.executor = ThreadPoolExecutor(settings.local_writer_threads)
+        self._changes = 0
+
+    async def _run_async(self, func, *args):
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(self.executor, func, *args)
 
     async def NewShard(self, request: ShardMetadata) -> ShardCreated:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.new_shard, request.SerializeToString()
-        )
+        resp = await self._run_async(self.writer.new_shard, request.SerializeToString())
         pb_bytes = bytes(resp)
         shard_created = ShardCreated()
         shard_created.ParseFromString(pb_bytes)
         return shard_created
 
     async def DeleteShard(self, request: ShardId) -> ShardId:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.delete_shard, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.delete_shard, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         shard_id = ShardId()
@@ -315,9 +292,8 @@ class StandaloneWriterWrapper:
         return shard_id
 
     async def ListShards(self, request: EmptyQuery) -> ShardIds:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.list_shards, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.list_shards, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         shard_ids = ShardIds()
@@ -325,9 +301,7 @@ class StandaloneWriterWrapper:
         return shard_ids
 
     async def CleanAndUpgradeShard(self, request: ShardId) -> ShardCleaned:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor,
+        resp = await self._run_async(
             self.writer.clean_and_upgrade_shard,
             request.SerializeToString(),
         )
@@ -337,9 +311,8 @@ class StandaloneWriterWrapper:
         return resp
 
     async def RemoveVectorSet(self, request: VectorSetID):
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.del_vectorset, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.del_vectorset, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         resp = OpStatus()
@@ -347,9 +320,8 @@ class StandaloneWriterWrapper:
         return resp
 
     async def AddVectorSet(self, request: VectorSetID):
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.set_vectorset, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.set_vectorset, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         resp = OpStatus()
@@ -357,38 +329,46 @@ class StandaloneWriterWrapper:
         return resp
 
     async def ListVectorSets(self, request: ShardId):
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.get_vectorset, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.get_vectorset, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         resp = VectorSetList()
         resp.ParseFromString(pb_bytes)
         return resp
 
+    async def _maybe_gc(self) -> None:
+        self._changes += 1
+        if self._changes > self.gc_threshold:
+            for shard in (await self.ListShards(EmptyQuery())).ids:
+                await self._run_async(self.writer.gc, shard)
+
     async def SetResource(self, request: Resource) -> OpStatus:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.set_resource, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.set_resource, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         op_status = OpStatus()
         op_status.ParseFromString(pb_bytes)
+
+        await self._maybe_gc()
+
         return op_status
 
     async def RemoveResource(self, request: ResourceID) -> OpStatus:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
-            self.executor, self.writer.remove_resource, request.SerializeToString()
+        resp = await self._run_async(
+            self.writer.remove_resource, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
         op_status = OpStatus()
         op_status.ParseFromString(pb_bytes)
+
+        await self._maybe_gc()
+
         return op_status
 
     async def JoinGraph(self, request: SetGraph) -> OpStatus:
-        loop = asyncio.get_running_loop()
-        resp = await loop.run_in_executor(
+        resp = await self._run_async(
             self.executor, self.writer.join_graph, request.SerializeToString()
         )
         pb_bytes = bytes(resp)
