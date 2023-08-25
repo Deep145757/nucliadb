@@ -62,9 +62,16 @@ impl AsyncShardReaderProvider for AsyncUnboundedShardReaderCache {
             return Ok(());
         }
 
+        let id_ = id.clone();
+        let mut write_lock = self.cache.write().await;
+        if write_lock.contains_key(&id) {
+            // recheck in case another loaded the shard first
+            debug!("Shard {shard_path:?} is already on memory");
+            return Ok(());
+        }
+
         // Avoid blocking while interacting with the file system (reads and
         // writes to disk)
-        let id_ = id.clone();
         let shard = tokio::task::spawn_blocking(move || {
             if !shard_path.is_dir() {
                 return Err(node_error!("Shard {shard_path:?} is not on disk"));
@@ -76,7 +83,7 @@ impl AsyncShardReaderProvider for AsyncUnboundedShardReaderCache {
         .await
         .context("Blocking task panicked")??;
 
-        self.cache.write().await.insert(id_, Arc::new(shard));
+        write_lock.insert(id_, Arc::new(shard));
         Ok(())
     }
 
