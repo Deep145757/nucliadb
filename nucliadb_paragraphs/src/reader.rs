@@ -405,7 +405,9 @@ impl<'a> Searcher<'a> {
         );
         if self.only_faceted {
             // No query search, just facets
+            debug!("do_search: only_faceted");
             let facets_count = searcher.search(&query, &facet_collector).unwrap();
+            debug!("do_search: !only_faceted");
             Ok(ParagraphSearchResponse::from(SearchFacetsResponse {
                 text_service: service,
                 facets_count: Some(facets_count),
@@ -419,7 +421,9 @@ impl<'a> Searcher<'a> {
                     let custom_collector =
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, custom_collector);
+                    debug!("do_search: facets empty with order");
                     let (total, top_docs) = searcher.search(&query, collector)?;
+                    debug!("do_search: !facets empty with order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
                         facets_count: None,
@@ -436,7 +440,9 @@ impl<'a> Searcher<'a> {
                     let topdocs_collector =
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, topdocs_collector);
+                    debug!("do_search: facets empty no order");
                     let (total, top_docs) = searcher.search(&query, collector)?;
+                    debug!("do_search: !facets empty no order");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
                         facets_count: None,
@@ -458,7 +464,9 @@ impl<'a> Searcher<'a> {
                     let custom_collector =
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, facet_collector, custom_collector);
+                    debug!("do_search: else order");
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
+                    debug!("do_search: !else order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
                         top_docs,
@@ -475,7 +483,9 @@ impl<'a> Searcher<'a> {
                     let topdocs_collector =
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, facet_collector, topdocs_collector);
+                    debug!("do_search: else");
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
+                    debug!("do_search: !else");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
                         top_docs,
