@@ -204,7 +204,7 @@ impl ReaderChild for ParagraphReaderService {
             only_faceted: request.only_faceted,
         };
         debug!("{id:?} - Searching: do_search");
-        let mut response = searcher.do_search(termc.clone(), original, self)?;
+        let mut response = searcher.do_search(termc.clone(), original, self, id)?;
         debug!("{id:?} - Searching: !do_search");
         if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
             debug!("{id:?} - Searching: ends at {v} ms");
@@ -214,7 +214,7 @@ impl ReaderChild for ParagraphReaderService {
             if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
                 debug!("{id:?} - Applying fuzzy: starts at {v} ms");
             }
-            let fuzzied = searcher.do_search(termc, fuzzied, self)?;
+            let fuzzied = searcher.do_search(termc, fuzzied, self, id)?;
             response = fuzzied;
             response.fuzzy_distance = FUZZY_DISTANCE as i32;
             if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
@@ -394,10 +394,11 @@ impl<'a> Searcher<'a> {
         termc: SharedTermC,
         query: Box<dyn Query>,
         service: &ParagraphReaderService,
+        id: Option<&String>,
     ) -> NodeResult<ParagraphSearchResponse> {
-        debug!("do_search: 1");
+        debug!("{id:?} do_search: 1");
         let searcher = service.reader.searcher();
-        debug!("do_search: 2");
+        debug!("{id:?} do_search: 2");
         let facet_collector = self.facets.iter().fold(
             FacetCollector::for_field(service.schema.facets),
             |mut collector, facet| {
@@ -408,9 +409,9 @@ impl<'a> Searcher<'a> {
         debug!("do_search: 3");
         if self.only_faceted {
             // No query search, just facets
-            debug!("do_search: only_faceted");
+            debug!("{id:?} do_search: only_faceted");
             let facets_count = searcher.search(&query, &facet_collector).unwrap();
-            debug!("do_search: !only_faceted");
+            debug!("{id:?} do_search: !only_faceted");
             Ok(ParagraphSearchResponse::from(SearchFacetsResponse {
                 text_service: service,
                 facets_count: Some(facets_count),
@@ -424,9 +425,9 @@ impl<'a> Searcher<'a> {
                     let custom_collector =
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, custom_collector);
-                    debug!("do_search: facets empty with order");
+                    debug!("{id:?} do_search: facets empty with order");
                     let (total, top_docs) = searcher.search(&query, collector)?;
-                    debug!("do_search: !facets empty with order");
+                    debug!("{id:?} do_search: !facets empty with order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
                         facets_count: None,
@@ -443,9 +444,9 @@ impl<'a> Searcher<'a> {
                     let topdocs_collector =
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, topdocs_collector);
-                    debug!("do_search: facets empty no order");
+                    debug!("{id:?} do_search: facets empty no order");
                     let (total, top_docs) = searcher.search(&query, collector)?;
-                    debug!("do_search: !facets empty no order");
+                    debug!("{id:?} do_search: !facets empty no order");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
                         facets_count: None,
@@ -467,9 +468,9 @@ impl<'a> Searcher<'a> {
                     let custom_collector =
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, facet_collector, custom_collector);
-                    debug!("do_search: else order");
+                    debug!("{id:?} do_search: else order");
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
-                    debug!("do_search: !else order");
+                    debug!("{id:?} do_search: !else order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
                         top_docs,
@@ -486,9 +487,9 @@ impl<'a> Searcher<'a> {
                     let topdocs_collector =
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, facet_collector, topdocs_collector);
-                    debug!("do_search: else");
+                    debug!("{id:?} do_search: else");
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
-                    debug!("do_search: !else");
+                    debug!("{id:?} do_search: !else");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
                         top_docs,
