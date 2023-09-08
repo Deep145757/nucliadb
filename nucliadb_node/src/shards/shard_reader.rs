@@ -309,6 +309,7 @@ impl ShardReader {
 
     #[tracing::instrument(skip_all)]
     pub fn search(&self, search_request: SearchRequest) -> NodeResult<SearchResponse> {
+        let search_id = uuid::Uuid::new_v4().to_string();
         let span = tracing::Span::current();
         let time = SystemTime::now();
 
@@ -399,20 +400,30 @@ impl ShardReader {
         let mut rvector = None;
         let mut rrelation = None;
 
+        debug!("{search_id:?} - Starting search");
         std_thread::scope(|s| {
             if !skip_fields {
+                debug!("{search_id:?} - Starting search text");
                 s.spawn(|| rtext = text_task());
+                debug!("{search_id:?} - Ending search text");
             }
             if !skip_paragraphs {
+                debug!("{search_id:?} - Starting search paragraph");
                 s.spawn(|| rparagraph = paragraph_task());
+                debug!("{search_id:?} - Ending search paragraph");
             }
             if !skip_vectors {
+                debug!("{search_id:?} - Starting search vector");
                 s.spawn(|| rvector = vector_task());
+                debug!("{search_id:?} - Ending search vector");
             }
             if !skip_relations {
+                debug!("{search_id:?} - Starting search relations");
                 s.spawn(|| rrelation = relation_task());
+                debug!("{search_id:?} - Ending search relations");
             }
         });
+        debug!("{search_id:?} - Ending search");
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
