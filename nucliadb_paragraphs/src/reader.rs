@@ -135,6 +135,7 @@ impl ParagraphReader for ParagraphReaderService {
             query: &text,
             page_number: 1,
             results_per_page: 10,
+            searcher: searcher,
         }))
     }
     #[tracing::instrument(skip_all)]
@@ -438,6 +439,7 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
+                        searcher: searcher,
                     }))
                 }
                 None => {
@@ -457,6 +459,7 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
+                        searcher: searcher,
                     }))
                 }
             }
@@ -481,6 +484,7 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
+                        searcher: searcher,
                     }))
                 }
                 None => {
@@ -500,6 +504,7 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
+                        searcher: searcher,
                     }))
                 }
             }
