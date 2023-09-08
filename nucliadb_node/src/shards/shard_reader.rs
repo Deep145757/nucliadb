@@ -31,8 +31,9 @@ use nucliadb_core::protos::{
     StreamRequest, SuggestRequest, SuggestResponse, TypeList, VectorSearchRequest,
     VectorSearchResponse,
 };
-use nucliadb_core::thread::{self, *};
+use nucliadb_core::thread::*;
 use nucliadb_core::tracing::{self, *};
+use rayon::{ThreadPool, ThreadPoolBuilder};
 
 use crate::disk_structure::*;
 use crate::env;
@@ -55,6 +56,7 @@ pub struct ShardReader {
     paragraph_service_version: i32,
     vector_service_version: i32,
     relation_service_version: i32,
+    thread_pool: ThreadPool,
 }
 
 impl ShardReader {
@@ -109,7 +111,7 @@ impl ShardReader {
         let mut text_result = Ok(0);
         let mut paragraph_result = Ok(0);
         let mut vector_result = Ok(0);
-        thread::scope(|s| {
+        self.thread_pool.scope(|s| {
             s.spawn(|_| text_result = text_task());
             s.spawn(|_| paragraph_result = paragraph_task());
             s.spawn(|_| vector_result = vector_task());
@@ -193,11 +195,16 @@ impl ShardReader {
         let info = info_span!(parent: &span, "relation open");
         let relation_task = || run_with_telemetry(info, relation_task);
 
+        let thread_pool = ThreadPoolBuilder::new()
+            .num_threads(4)
+            .thread_name(move |num| format!("shard_reader{}", num))
+            .build()?;
+
         let mut text_result = None;
         let mut paragraph_result = None;
         let mut vector_result = None;
         let mut relation_result = None;
-        thread::scope(|s| {
+        thread_pool.scope(|s| {
             s.spawn(|_| text_result = text_task());
             s.spawn(|_| paragraph_result = paragraph_task());
             s.spawn(|_| vector_result = vector_task());
@@ -223,6 +230,7 @@ impl ShardReader {
             paragraph_service_version: versions.version_paragraphs() as i32,
             vector_service_version: versions.version_vectors() as i32,
             relation_service_version: versions.version_relations() as i32,
+            thread_pool: thread_pool,
         })
     }
 
@@ -279,7 +287,7 @@ impl ShardReader {
         let info = info_span!(parent: &span, "paragraph suggest");
         let paragraph_task = || run_with_telemetry(info, paragraph_task);
 
-        let (paragraph, relation) = thread::join(paragraph_task, relation_task);
+        let (paragraph, relation) = self.thread_pool.join(paragraph_task, relation_task);
         let rparagraph = paragraph?;
         let entities = relation
             .into_iter()
@@ -401,7 +409,7 @@ impl ShardReader {
         let mut rrelation = None;
 
         debug!("{search_id:?} - Starting search");
-        thread::scope(|s| {
+        self.thread_pool.scope(|s| {
             if !skip_fields {
                 s.spawn(|_| {
                     debug!("{search_id:?} - Starting search[text]");

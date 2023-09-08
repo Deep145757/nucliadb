@@ -1998,6 +1998,7 @@ dependencies = [
  "opentelemetry-jaeger",
  "opentelemetry-zipkin",
  "rand",
+ "rayon",
  "regex",
  "reqwest",
  "rstack",
