@@ -405,30 +405,30 @@ impl ShardReader {
         std_thread::scope(|s| {
             if !skip_fields {
                 s.spawn(|| {
-                    debug!("{search_id:?} - Starting search text");
+                    debug!("{search_id:?} - Starting search[text]");
                     rtext = text_task();
-                    debug!("{search_id:?} - Ending search text");
+                    debug!("{search_id:?} - Ending search[text]");
                 });
             }
             if !skip_paragraphs {
                 s.spawn(|| {
-                    debug!("{search_id:?} - Starting search paragraph");
+                    debug!("{search_id:?} - Starting search[paragraph]");
                     rparagraph = paragraph_task();
-                    debug!("{search_id:?} - Ending search paragraph");
+                    debug!("{search_id:?} - Ending search[paragraph]");
                 });
             }
             if !skip_vectors {
                 s.spawn(|| {
-                    debug!("{search_id:?} - Starting search vector");
+                    debug!("{search_id:?} - Starting search[vector]");
                     rvector = vector_task();
-                    debug!("{search_id:?} - Ending search vector");
+                    debug!("{search_id:?} - Ending search[vector]");
                 });
             }
             if !skip_relations {
                 s.spawn(|| {
-                    debug!("{search_id:?} - Starting search relations");
+                    debug!("{search_id:?} - Starting search[relations]");
                     rrelation = relation_task();
-                    debug!("{search_id:?} - Ending search relations");
+                    debug!("{search_id:?} - Ending search[relations]");
                 });
             }
         });

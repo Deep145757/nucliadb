@@ -203,7 +203,9 @@ impl ReaderChild for ParagraphReaderService {
             text: &text,
             only_faceted: request.only_faceted,
         };
+        debug!("{id:?} - Searching: do_search");
         let mut response = searcher.do_search(termc.clone(), original, self)?;
+        debug!("{id:?} - Searching: !do_search");
         if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
             debug!("{id:?} - Searching: ends at {v} ms");
         }
