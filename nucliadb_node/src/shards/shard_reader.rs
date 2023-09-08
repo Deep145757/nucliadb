@@ -403,24 +403,32 @@ impl ShardReader {
         debug!("{search_id:?} - Starting search");
         std_thread::scope(|s| {
             if !skip_fields {
-                debug!("{search_id:?} - Starting search text");
-                s.spawn(|| rtext = text_task());
-                debug!("{search_id:?} - Ending search text");
+                s.spawn(|| {
+                    debug!("{search_id:?} - Starting search text");
+                    rtext = text_task();
+                    debug!("{search_id:?} - Ending search text");
+                });
             }
             if !skip_paragraphs {
-                debug!("{search_id:?} - Starting search paragraph");
-                s.spawn(|| rparagraph = paragraph_task());
-                debug!("{search_id:?} - Ending search paragraph");
+                s.spawn(|| {
+                    debug!("{search_id:?} - Starting search paragraph");
+                    rparagraph = paragraph_task();
+                    debug!("{search_id:?} - Ending search paragraph");
+                });
             }
             if !skip_vectors {
-                debug!("{search_id:?} - Starting search vector");
-                s.spawn(|| rvector = vector_task());
-                debug!("{search_id:?} - Ending search vector");
+                s.spawn(|| {
+                    debug!("{search_id:?} - Starting search vector");
+                    rvector = vector_task();
+                    debug!("{search_id:?} - Ending search vector");
+                });
             }
             if !skip_relations {
-                debug!("{search_id:?} - Starting search relations");
-                s.spawn(|| rrelation = relation_task());
-                debug!("{search_id:?} - Ending search relations");
+                s.spawn(|| {
+                    debug!("{search_id:?} - Starting search relations");
+                    rrelation = relation_task();
+                    debug!("{search_id:?} - Ending search relations");
+                });
             }
         });
         debug!("{search_id:?} - Ending search");
