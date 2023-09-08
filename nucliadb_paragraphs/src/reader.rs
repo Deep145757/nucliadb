@@ -395,7 +395,9 @@ impl<'a> Searcher<'a> {
         query: Box<dyn Query>,
         service: &ParagraphReaderService,
     ) -> NodeResult<ParagraphSearchResponse> {
+        debug!("do_search: 1");
         let searcher = service.reader.searcher();
+        debug!("do_search: 2");
         let facet_collector = self.facets.iter().fold(
             FacetCollector::for_field(service.schema.facets),
             |mut collector, facet| {
@@ -403,6 +405,7 @@ impl<'a> Searcher<'a> {
                 collector
             },
         );
+        debug!("do_search: 3");
         if self.only_faceted {
             // No query search, just facets
             debug!("do_search: only_faceted");
