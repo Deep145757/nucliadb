@@ -16,6 +16,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+use anyhow::anyhow;
+use crossbeam_utils::thread;
 use nucliadb_core::metrics::{self, request_time};
 use nucliadb_core::prelude::*;
 use nucliadb_core::protos::shard_created::{
@@ -28,10 +30,9 @@ use nucliadb_core::protos::{
     StreamRequest, SuggestRequest, SuggestResponse, TypeList, VectorSearchRequest,
     VectorSearchResponse,
 };
-use nucliadb_core::thread::{self, *};
+use nucliadb_core::thread::*;
 use nucliadb_core::tracing::{self, *};
 use std::path::Path;
-use std::thread as std_thread;
 use std::time::SystemTime;
 
 use crate::disk_structure::*;
@@ -109,11 +110,12 @@ impl ShardReader {
         let mut text_result = Ok(0);
         let mut paragraph_result = Ok(0);
         let mut vector_result = Ok(0);
-        std_thread::scope(|s| {
-            s.spawn(|| text_result = text_task());
-            s.spawn(|| paragraph_result = paragraph_task());
-            s.spawn(|| vector_result = vector_task());
-        });
+        thread::scope(|s| {
+            s.spawn(|_| text_result = text_task());
+            s.spawn(|_| paragraph_result = paragraph_task());
+            s.spawn(|_| vector_result = vector_task());
+        })
+        .expect("threads to finish");
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
@@ -197,12 +199,13 @@ impl ShardReader {
         let mut paragraph_result = None;
         let mut vector_result = None;
         let mut relation_result = None;
-        std_thread::scope(|s| {
-            s.spawn(|| text_result = text_task());
-            s.spawn(|| paragraph_result = paragraph_task());
-            s.spawn(|| vector_result = vector_task());
-            s.spawn(|| relation_result = relation_task());
-        });
+        thread::scope(|s| {
+            s.spawn(|_| text_result = text_task());
+            s.spawn(|_| paragraph_result = paragraph_task());
+            s.spawn(|_| vector_result = vector_task());
+            s.spawn(|_| relation_result = relation_task());
+        })
+        .expect("threads to finish");
         let fields = text_result.transpose()?;
         let paragraphs = paragraph_result.transpose()?;
         let vectors = vector_result.transpose()?;
@@ -278,8 +281,14 @@ impl ShardReader {
         let relation_task = || run_with_telemetry(info, relation_task);
         let info = info_span!(parent: &span, "paragraph suggest");
         let paragraph_task = || run_with_telemetry(info, paragraph_task);
+        let mut paragraph = Err(anyhow!("No value"));
+        let mut relation = Vec::new();
 
-        let (paragraph, relation) = thread::join(paragraph_task, relation_task);
+        thread::scope(|s| {
+            s.spawn(|_| paragraph = paragraph_task());
+            s.spawn(|_| relation = relation_task());
+        })
+        .expect("threads to finish");
         let rparagraph = paragraph?;
         let entities = relation
             .into_iter()
@@ -398,20 +407,21 @@ impl ShardReader {
         let mut rvector = None;
         let mut rrelation = None;
 
-        std_thread::scope(|s| {
+        thread::scope(|s| {
             if !skip_fields {
-                s.spawn(|| rtext = text_task());
+                s.spawn(|_| rtext = text_task());
             }
             if !skip_paragraphs {
-                s.spawn(|| rparagraph = paragraph_task());
+                s.spawn(|_| rparagraph = paragraph_task());
             }
             if !skip_vectors {
-                s.spawn(|| rvector = vector_task());
+                s.spawn(|_| rvector = vector_task());
             }
             if !skip_relations {
-                s.spawn(|| rrelation = relation_task());
+                s.spawn(|_| rrelation = relation_task());
             }
-        });
+        })
+        .expect("threads to finish");
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
