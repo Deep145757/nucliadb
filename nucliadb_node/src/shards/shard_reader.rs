@@ -17,7 +17,6 @@
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 use anyhow::anyhow;
-use crossbeam_utils::thread;
 use nucliadb_core::metrics::{self, request_time};
 use nucliadb_core::prelude::*;
 use nucliadb_core::protos::shard_created::{
@@ -30,7 +29,7 @@ use nucliadb_core::protos::{
     StreamRequest, SuggestRequest, SuggestResponse, TypeList, VectorSearchRequest,
     VectorSearchResponse,
 };
-use nucliadb_core::thread::*;
+use nucliadb_core::thread::{self, *};
 use nucliadb_core::tracing::{self, *};
 use std::path::Path;
 use std::time::SystemTime;
@@ -114,8 +113,7 @@ impl ShardReader {
             s.spawn(|_| text_result = text_task());
             s.spawn(|_| paragraph_result = paragraph_task());
             s.spawn(|_| vector_result = vector_task());
-        })
-        .expect("threads to finish");
+        });
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
@@ -204,8 +202,8 @@ impl ShardReader {
             s.spawn(|_| paragraph_result = paragraph_task());
             s.spawn(|_| vector_result = vector_task());
             s.spawn(|_| relation_result = relation_task());
-        })
-        .expect("threads to finish");
+        });
+
         let fields = text_result.transpose()?;
         let paragraphs = paragraph_result.transpose()?;
         let vectors = vector_result.transpose()?;
@@ -287,8 +285,7 @@ impl ShardReader {
         thread::scope(|s| {
             s.spawn(|_| paragraph = paragraph_task());
             s.spawn(|_| relation = relation_task());
-        })
-        .expect("threads to finish");
+        });
         let rparagraph = paragraph?;
         let entities = relation
             .into_iter()
@@ -420,8 +417,7 @@ impl ShardReader {
             if !skip_relations {
                 s.spawn(|_| rrelation = relation_task());
             }
-        })
-        .expect("threads to finish");
+        });
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);

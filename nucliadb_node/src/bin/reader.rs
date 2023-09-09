@@ -24,9 +24,9 @@ use std::time::Instant;
 use nucliadb_core::protos::node_reader_server::NodeReaderServer;
 use nucliadb_core::tracing::*;
 use nucliadb_core::{node_error, NodeResult};
-use nucliadb_node::grpc::middleware::{
-    GrpcDebugLogsLayer, GrpcInstrumentorLayer, GrpcTasksMetricsLayer,
-};
+// use nucliadb_node::grpc::middleware::{
+//     GrpcDebugLogsLayer, GrpcInstrumentorLayer, GrpcTasksMetricsLayer,
+// };
 use nucliadb_node::grpc::reader::NodeReaderGRPCDriver;
 use nucliadb_node::http_server::{run_http_server, ServerOptions};
 use nucliadb_node::lifecycle;
@@ -98,17 +98,17 @@ pub async fn start_grpc_service(grpc_driver: NodeReaderGRPCDriver, listen_addres
         listen_address
     );
 
-    let tracing_middleware = GrpcInstrumentorLayer;
-    let debug_logs_middleware = GrpcDebugLogsLayer;
-    let metrics_middleware = GrpcTasksMetricsLayer;
+    // let tracing_middleware = GrpcInstrumentorLayer;
+    // let debug_logs_middleware = GrpcDebugLogsLayer;
+    // let metrics_middleware = GrpcTasksMetricsLayer;
 
     let (mut health_reporter, health_service) = tonic_health::server::health_reporter();
     health_reporter.set_serving::<GrpcServer>().await;
 
     Server::builder()
-        .layer(tracing_middleware)
-        .layer(debug_logs_middleware)
-        .layer(metrics_middleware)
+        // .layer(tracing_middleware)
+        // .layer(debug_logs_middleware)
+        // .layer(metrics_middleware)
         .add_service(health_service)
         .add_service(GrpcServer::new(grpc_driver))
         .serve(listen_address)
