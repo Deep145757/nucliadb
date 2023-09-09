@@ -11,7 +11,7 @@ prometheus-client = "0.20.0"
 tracing = "0.1.29"
 prost-types = "0.10"
 prost = "0.10"
-rayon = "1.5.1"
+rayon = "1.7.0"
 nucliadb_protos = { path = "../nucliadb_protos/rust" }
 fs2 = "0.4.3"
 thiserror = "1.0.31"
