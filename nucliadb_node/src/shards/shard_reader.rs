@@ -16,9 +16,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-use std::path::Path;
-use std::time::SystemTime;
-
 use nucliadb_core::metrics::{self, request_time};
 use nucliadb_core::prelude::*;
 use nucliadb_core::protos::shard_created::{
@@ -31,9 +28,11 @@ use nucliadb_core::protos::{
     StreamRequest, SuggestRequest, SuggestResponse, TypeList, VectorSearchRequest,
     VectorSearchResponse,
 };
-use nucliadb_core::thread::*;
+use nucliadb_core::thread::{self, *};
 use nucliadb_core::tracing::{self, *};
-use rayon::{ThreadPool, ThreadPoolBuilder};
+use std::path::Path;
+use std::thread as std_thread;
+use std::time::SystemTime;
 
 use crate::disk_structure::*;
 use crate::env;
@@ -56,7 +55,6 @@ pub struct ShardReader {
     paragraph_service_version: i32,
     vector_service_version: i32,
     relation_service_version: i32,
-    thread_pool: ThreadPool,
 }
 
 impl ShardReader {
@@ -111,10 +109,10 @@ impl ShardReader {
         let mut text_result = Ok(0);
         let mut paragraph_result = Ok(0);
         let mut vector_result = Ok(0);
-        self.thread_pool.scope(|s| {
-            s.spawn(|_| text_result = text_task());
-            s.spawn(|_| paragraph_result = paragraph_task());
-            s.spawn(|_| vector_result = vector_task());
+        std_thread::scope(|s| {
+            s.spawn(|| text_result = text_task());
+            s.spawn(|| paragraph_result = paragraph_task());
+            s.spawn(|| vector_result = vector_task());
         });
 
         let metrics = metrics::get_metrics();
@@ -195,20 +193,15 @@ impl ShardReader {
         let info = info_span!(parent: &span, "relation open");
         let relation_task = || run_with_telemetry(info, relation_task);
 
-        let thread_pool = ThreadPoolBuilder::new()
-            .num_threads(4)
-            .thread_name(move |num| format!("shard_reader{}", num))
-            .build()?;
-
         let mut text_result = None;
         let mut paragraph_result = None;
         let mut vector_result = None;
         let mut relation_result = None;
-        thread_pool.scope(|s| {
-            s.spawn(|_| text_result = text_task());
-            s.spawn(|_| paragraph_result = paragraph_task());
-            s.spawn(|_| vector_result = vector_task());
-            s.spawn(|_| relation_result = relation_task());
+        std_thread::scope(|s| {
+            s.spawn(|| text_result = text_task());
+            s.spawn(|| paragraph_result = paragraph_task());
+            s.spawn(|| vector_result = vector_task());
+            s.spawn(|| relation_result = relation_task());
         });
         let fields = text_result.transpose()?;
         let paragraphs = paragraph_result.transpose()?;
@@ -230,7 +223,6 @@ impl ShardReader {
             paragraph_service_version: versions.version_paragraphs() as i32,
             vector_service_version: versions.version_vectors() as i32,
             relation_service_version: versions.version_relations() as i32,
-            thread_pool: thread_pool,
         })
     }
 
@@ -287,7 +279,7 @@ impl ShardReader {
         let info = info_span!(parent: &span, "paragraph suggest");
         let paragraph_task = || run_with_telemetry(info, paragraph_task);
 
-        let (paragraph, relation) = self.thread_pool.join(paragraph_task, relation_task);
+        let (paragraph, relation) = thread::join(paragraph_task, relation_task);
         let rparagraph = paragraph?;
         let entities = relation
             .into_iter()
@@ -316,7 +308,6 @@ impl ShardReader {
 
     #[tracing::instrument(skip_all)]
     pub fn search(&self, search_request: SearchRequest) -> NodeResult<SearchResponse> {
-        let search_id = uuid::Uuid::new_v4().to_string();
         let span = tracing::Span::current();
         let time = SystemTime::now();
 
@@ -327,7 +318,7 @@ impl ShardReader {
             search_request.relation_prefix.is_none() && search_request.relation_subgraph.is_none();
 
         let field_request = DocumentSearchRequest {
-            id: search_id.clone(),
+            id: "".to_string(),
             body: search_request.body.clone(),
             fields: search_request.fields.clone(),
             filter: search_request.filter.clone(),
@@ -345,7 +336,7 @@ impl ShardReader {
         let text_task = move || Some(text_reader_service.search(&field_request));
 
         let paragraph_request = ParagraphSearchRequest {
-            id: search_id.clone(),
+            id: "".to_string(),
             uuid: "".to_string(),
             with_duplicates: search_request.with_duplicates,
             body: search_request.body.clone(),
@@ -365,7 +356,7 @@ impl ShardReader {
         let paragraph_task = move || Some(paragraph_reader_service.search(&paragraph_request));
 
         let vector_request = VectorSearchRequest {
-            id: search_id.clone(),
+            id: "".to_string(),
             vector_set: search_request.vectorset.clone(),
             vector: search_request.vector.clone(),
             page_number: search_request.page_number,
@@ -385,7 +376,6 @@ impl ShardReader {
         let vector_task = move || Some(vector_reader_service.search(&vector_request));
 
         let relation_request = RelationSearchRequest {
-            id: search_id.clone(),
             shard_id: search_request.shard.clone(),
             prefix: search_request.relation_prefix.clone(),
             subgraph: search_request.relation_subgraph,
@@ -408,38 +398,20 @@ impl ShardReader {
         let mut rvector = None;
         let mut rrelation = None;
 
-        debug!("{search_id:?} - Starting search");
-        self.thread_pool.scope(|s| {
+        std_thread::scope(|s| {
             if !skip_fields {
-                s.spawn(|_| {
-                    debug!("{search_id:?} - Starting search[text]");
-                    rtext = text_task();
-                    debug!("{search_id:?} - Ending search[text]");
-                });
+                s.spawn(|| rtext = text_task());
             }
             if !skip_paragraphs {
-                s.spawn(|_| {
-                    debug!("{search_id:?} - Starting search[paragraph]");
-                    rparagraph = paragraph_task();
-                    debug!("{search_id:?} - Ending search[paragraph]");
-                });
+                s.spawn(|| rparagraph = paragraph_task());
             }
             if !skip_vectors {
-                s.spawn(|_| {
-                    debug!("{search_id:?} - Starting search[vector]");
-                    rvector = vector_task();
-                    debug!("{search_id:?} - Ending search[vector]");
-                });
+                s.spawn(|| rvector = vector_task());
             }
             if !skip_relations {
-                s.spawn(|_| {
-                    debug!("{search_id:?} - Starting search[relations]");
-                    rrelation = relation_task();
-                    debug!("{search_id:?} - Ending search[relations]");
-                });
+                s.spawn(|| rrelation = relation_task());
             }
         });
-        debug!("{search_id:?} - Ending search");
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
