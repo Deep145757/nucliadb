@@ -32,7 +32,7 @@ use nucliadb_node::http_server::{run_http_server, ServerOptions};
 use nucliadb_node::lifecycle;
 use nucliadb_node::settings::providers::env::EnvSettingsProvider;
 use nucliadb_node::settings::providers::SettingsProvider;
-use nucliadb_node::telemetry::init_telemetry;
+// use nucliadb_node::telemetry::init_telemetry;
 use tokio::signal::unix::SignalKind;
 use tokio::signal::{ctrl_c, unix};
 use tonic::transport::Server;
@@ -53,7 +53,7 @@ async fn main() -> NodeResult<()> {
     // XXX it probably should be moved to a more clear abstraction
     lifecycle::initialize_reader();
 
-    let _guard = init_telemetry(&settings)?;
+    // let _guard = init_telemetry(&settings)?;
 
     let grpc_driver = NodeReaderGRPCDriver::new(Arc::clone(&settings));
     grpc_driver.initialize().await?;
