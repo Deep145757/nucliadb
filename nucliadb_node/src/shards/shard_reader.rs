@@ -184,14 +184,14 @@ impl ShardReader {
         let vector_task = || Some(versions.get_vectors_reader(&vsc));
         let relation_task = || Some(versions.get_relations_reader(&rsc));
 
-        let info = info_span!(parent: &span, "text open");
-        let text_task = || run_with_telemetry(info, text_task);
-        let info = info_span!(parent: &span, "paragraph open");
-        let paragraph_task = || run_with_telemetry(info, paragraph_task);
-        let info = info_span!(parent: &span, "vector open");
-        let vector_task = || run_with_telemetry(info, vector_task);
-        let info = info_span!(parent: &span, "relation open");
-        let relation_task = || run_with_telemetry(info, relation_task);
+        // let info = info_span!(parent: &span, "text open");
+        // let text_task = || run_with_telemetry(info, text_task);
+        // let info = info_span!(parent: &span, "paragraph open");
+        // let paragraph_task = || run_with_telemetry(info, paragraph_task);
+        // let info = info_span!(parent: &span, "vector open");
+        // let vector_task = || run_with_telemetry(info, vector_task);
+        // let info = info_span!(parent: &span, "relation open");
+        // let relation_task = || run_with_telemetry(info, relation_task);
 
         let mut text_result = None;
         let mut paragraph_result = None;
