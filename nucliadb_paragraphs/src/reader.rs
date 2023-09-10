@@ -67,6 +67,7 @@ impl ParagraphReader for ParagraphReaderService {
         let id: Option<String> = None;
         let searcher = self.reader.searcher();
         let count = searcher.search(&AllQuery, &Count).unwrap_or_default();
+        drop(searcher);
         if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
             debug!("{id:?} - Ending at: {v} ms");
         }
@@ -117,6 +118,7 @@ impl ParagraphReader for ParagraphReaderService {
                 debug!("{id:?} - Trying fuzzy: ends at {v} ms");
             }
         }
+        drop(searcher);
         if let Ok(v) = time.elapsed().map(|s| s.as_millis()) {
             debug!("{id:?} - Ending at: {v} ms");
         }
@@ -135,7 +137,6 @@ impl ParagraphReader for ParagraphReaderService {
             query: &text,
             page_number: 1,
             results_per_page: 10,
-            searcher: searcher,
         }))
     }
     #[tracing::instrument(skip_all)]
@@ -145,7 +146,7 @@ impl ParagraphReader for ParagraphReaderService {
             total: self.count()?,
             paragraph_field: self.schema.paragraph,
             facet_field: self.schema.facets,
-            searcher: self.reader.searcher(),
+            searcher: self.reader.searcher(), // this is bad
             query: search_query::streaming_query(&self.schema, request),
         };
         Ok(ParagraphIterator::new(producer.flatten()))
@@ -262,6 +263,7 @@ impl ReaderChild for ParagraphReaderService {
             };
             keys.push(key);
         }
+        drop(searcher);
 
         let metrics = metrics::get_metrics();
         let took = time.elapsed().map(|i| i.as_secs_f64()).unwrap_or(f64::NAN);
@@ -398,7 +400,6 @@ impl<'a> Searcher<'a> {
         id: Option<&String>,
     ) -> NodeResult<ParagraphSearchResponse> {
         debug!("{id:?} do_search: 1");
-        let searcher = service.reader.searcher();
         debug!("{id:?} do_search: 2");
         let facet_collector = self.facets.iter().fold(
             FacetCollector::for_field(service.schema.facets),
@@ -411,8 +412,10 @@ impl<'a> Searcher<'a> {
         if self.only_faceted {
             // No query search, just facets
             debug!("{id:?} do_search: only_faceted");
+            let searcher = service.reader.searcher();
             let facets_count = searcher.search(&query, &facet_collector).unwrap();
             debug!("{id:?} do_search: !only_faceted");
+            drop(searcher);
             Ok(ParagraphSearchResponse::from(SearchFacetsResponse {
                 text_service: service,
                 facets_count: Some(facets_count),
@@ -427,7 +430,9 @@ impl<'a> Searcher<'a> {
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, custom_collector);
                     debug!("{id:?} do_search: facets empty with order");
+                    let searcher = service.reader.searcher();
                     let (total, top_docs) = searcher.search(&query, collector)?;
+                    drop(searcher);
                     debug!("{id:?} do_search: !facets empty with order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
@@ -439,7 +444,6 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
-                        searcher: searcher,
                     }))
                 }
                 None => {
@@ -447,7 +451,9 @@ impl<'a> Searcher<'a> {
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, topdocs_collector);
                     debug!("{id:?} do_search: facets empty no order");
+                    let searcher = service.reader.searcher();
                     let (total, top_docs) = searcher.search(&query, collector)?;
+                    drop(searcher);
                     debug!("{id:?} do_search: !facets empty no order");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
@@ -459,7 +465,6 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
-                        searcher: searcher,
                     }))
                 }
             }
@@ -472,7 +477,9 @@ impl<'a> Searcher<'a> {
                         self.custom_order_collector(order, extra_result, self.offset);
                     let collector = &(Count, facet_collector, custom_collector);
                     debug!("{id:?} do_search: else order");
+                    let searcher = service.reader.searcher();
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
+                    drop(searcher);
                     debug!("{id:?} do_search: !else order");
                     Ok(ParagraphSearchResponse::from(SearchIntResponse {
                         total,
@@ -484,7 +491,6 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
-                        searcher: searcher,
                     }))
                 }
                 None => {
@@ -492,7 +498,9 @@ impl<'a> Searcher<'a> {
                         TopDocs::with_limit(extra_result).and_offset(self.offset);
                     let collector = &(Count, facet_collector, topdocs_collector);
                     debug!("{id:?} do_search: else");
+                    let searcher = service.reader.searcher();
                     let (total, facets_count, top_docs) = searcher.search(&query, collector)?;
+                    drop(searcher);
                     debug!("{id:?} do_search: !else");
                     Ok(ParagraphSearchResponse::from(SearchBm25Response {
                         total,
@@ -504,7 +512,6 @@ impl<'a> Searcher<'a> {
                         query: self.text,
                         page_number: self.request.page_number,
                         results_per_page: self.results as i32,
-                        searcher: searcher,
                     }))
                 }
             }
@@ -744,6 +751,7 @@ mod tests {
         let searcher = reader.searcher();
 
         let (_top_docs, count) = searcher.search(&AllQuery, &(TopDocs::with_limit(10), Count))?;
+        drop(searcher);
         assert_eq!(count, 4);
 
         const UUID: &str = "f56c58ac-b4f9-4d61-a077-ffccaadd0001";
