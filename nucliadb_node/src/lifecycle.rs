@@ -54,5 +54,7 @@ pub fn initialize_writer(data_path: &Path, shards_path: &Path) -> NodeResult<()>
 /// a reader
 pub fn initialize_reader() {
     // We swallow the error if the threadpool was already initialized
-    let _ = ThreadPoolBuilder::new().num_threads(10).build_global();
+    let _ = ThreadPoolBuilder::new()
+        .num_threads(env::num_rayon_threads())
+        .build_global();
 }
