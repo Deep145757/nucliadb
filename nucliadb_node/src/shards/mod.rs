@@ -24,6 +24,7 @@ pub mod metadata;
 pub mod providers;
 pub mod shard_reader;
 pub mod shard_writer;
+pub mod threadpool;
 pub mod versions;
 
 // Alias for more readable imports
