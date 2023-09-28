@@ -83,11 +83,13 @@ message BrokerMessage {
     // Field File
     map<string, resources.FieldFile> files = 17;
 
-    // Link extracted extra info
+    // DEPRECATED Link extracted extra info
+    // USE NEW WRAPPED field: link_extracted_data_wrapped
     repeated resources.LinkExtractedData link_extracted_data = 18;
 
-    // File extracted extra info
-    repeated resources.FileExtractedData file_extracted_data = 19;
+    // DEPRECATED File extracted extra info
+    // USE NEW WRAPPED field: file_extracted_data_wrapped
+    repeated resources.FileExtractedData file_extracted_data = 19 [deprecated = true];
 
     // Field Extracted/Computed information
     repeated resources.ExtractedTextWrapper extracted_text = 20;
@@ -119,6 +121,12 @@ message BrokerMessage {
     bool reindex = 36;
 
     resources.Extra extra = 37;
+
+    // Link extracted extra info
+    repeated resources.LinkExtractedDataWrapper link_extracted_data_wrapped = 38;
+
+    // File extracted extra info
+    repeated resources.FileExtractedDataWrapper file_extracted_data_wrapped = 39;
 }
 
 

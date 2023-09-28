@@ -168,6 +168,14 @@ message FileExtractedData {
     map<string, NestedListPosition> nested_list_position = 13;
 }
 
+message FileExtractedDataWrapper {
+    string field = 1;
+    oneof file_or_data {
+        FileExtractedData data = 2;
+        CloudFile file = 3;
+    }
+}
+
 message LinkExtractedData {
     google.protobuf.Timestamp date = 1;
     string language = 2;
@@ -183,6 +191,14 @@ message LinkExtractedData {
     string embed = 12;
 
     PageStructure pdf_structure = 13;
+}
+
+message LinkExtractedDataWrapper {
+    string field = 1;
+    oneof file_or_data {
+        LinkExtractedData data = 2;
+        CloudFile file = 3;
+    }
 }
 
 message ExtractedTextWrapper {

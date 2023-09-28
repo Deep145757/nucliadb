@@ -105,6 +105,7 @@ from nucliadb_protos.resources_pb2 import (
     FieldText as FieldText,
     FieldType as FieldType,
     FileExtractedData as FileExtractedData,
+    FileExtractedDataWrapper as FileExtractedDataWrapper,
     FilePages as FilePages,
     GENERIC as GENERIC,
     KEYWORDSET as KEYWORDSET,
@@ -115,6 +116,7 @@ from nucliadb_protos.resources_pb2 import (
     LargeComputedMetadataWrapper as LargeComputedMetadataWrapper,
     LayoutContent as LayoutContent,
     LinkExtractedData as LinkExtractedData,
+    LinkExtractedDataWrapper as LinkExtractedDataWrapper,
     Message as Message,
     MessageContent as MessageContent,
     Metadata as Metadata,
@@ -422,6 +424,8 @@ class BrokerMessage(google.protobuf.message.Message):
     USER_VECTORS_FIELD_NUMBER: builtins.int
     REINDEX_FIELD_NUMBER: builtins.int
     EXTRA_FIELD_NUMBER: builtins.int
+    LINK_EXTRACTED_DATA_WRAPPED_FIELD_NUMBER: builtins.int
+    FILE_EXTRACTED_DATA_WRAPPED_FIELD_NUMBER: builtins.int
     kbid: builtins.str
     uuid: builtins.str
     slug: builtins.str
@@ -458,10 +462,14 @@ class BrokerMessage(google.protobuf.message.Message):
         """Field File"""
     @property
     def link_extracted_data(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[nucliadb_protos.resources_pb2.LinkExtractedData]:
-        """Link extracted extra info"""
+        """DEPRECATED Link extracted extra info
+        USE NEW WRAPPED field: link_extracted_data_wrapped
+        """
     @property
     def file_extracted_data(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[nucliadb_protos.resources_pb2.FileExtractedData]:
-        """File extracted extra info"""
+        """DEPRECATED File extracted extra info
+        USE NEW WRAPPED field: file_extracted_data_wrapped
+        """
     @property
     def extracted_text(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[nucliadb_protos.resources_pb2.ExtractedTextWrapper]:
         """Field Extracted/Computed information"""
@@ -492,6 +500,12 @@ class BrokerMessage(google.protobuf.message.Message):
     """If true, force reindex all paragraphs in a resource"""
     @property
     def extra(self) -> nucliadb_protos.resources_pb2.Extra: ...
+    @property
+    def link_extracted_data_wrapped(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[nucliadb_protos.resources_pb2.LinkExtractedDataWrapper]:
+        """Link extracted extra info"""
+    @property
+    def file_extracted_data_wrapped(self) -> google.protobuf.internal.containers.RepeatedCompositeFieldContainer[nucliadb_protos.resources_pb2.FileExtractedDataWrapper]:
+        """File extracted extra info"""
     def __init__(
         self,
         *,
@@ -530,9 +544,11 @@ class BrokerMessage(google.protobuf.message.Message):
         user_vectors: collections.abc.Iterable[nucliadb_protos.resources_pb2.UserVectorsWrapper] | None = ...,
         reindex: builtins.bool = ...,
         extra: nucliadb_protos.resources_pb2.Extra | None = ...,
+        link_extracted_data_wrapped: collections.abc.Iterable[nucliadb_protos.resources_pb2.LinkExtractedDataWrapper] | None = ...,
+        file_extracted_data_wrapped: collections.abc.Iterable[nucliadb_protos.resources_pb2.FileExtractedDataWrapper] | None = ...,
     ) -> None: ...
     def HasField(self, field_name: typing_extensions.Literal["audit", b"audit", "basic", b"basic", "done_time", b"done_time", "extra", b"extra", "origin", b"origin"]) -> builtins.bool: ...
-    def ClearField(self, field_name: typing_extensions.Literal["account_seq", b"account_seq", "audit", b"audit", "basic", b"basic", "conversations", b"conversations", "datetimes", b"datetimes", "delete_fields", b"delete_fields", "done_time", b"done_time", "errors", b"errors", "extra", b"extra", "extracted_text", b"extracted_text", "field_large_metadata", b"field_large_metadata", "field_metadata", b"field_metadata", "field_vectors", b"field_vectors", "file_extracted_data", b"file_extracted_data", "files", b"files", "kbid", b"kbid", "keywordsets", b"keywordsets", "layouts", b"layouts", "link_extracted_data", b"link_extracted_data", "links", b"links", "multiid", b"multiid", "origin", b"origin", "origin_seq", b"origin_seq", "pre_processing_time", b"pre_processing_time", "processing_id", b"processing_id", "reindex", b"reindex", "relations", b"relations", "slow_processing_time", b"slow_processing_time", "slug", b"slug", "source", b"source", "texts", b"texts", "txseqid", b"txseqid", "type", b"type", "user_vectors", b"user_vectors", "uuid", b"uuid"]) -> None: ...
+    def ClearField(self, field_name: typing_extensions.Literal["account_seq", b"account_seq", "audit", b"audit", "basic", b"basic", "conversations", b"conversations", "datetimes", b"datetimes", "delete_fields", b"delete_fields", "done_time", b"done_time", "errors", b"errors", "extra", b"extra", "extracted_text", b"extracted_text", "field_large_metadata", b"field_large_metadata", "field_metadata", b"field_metadata", "field_vectors", b"field_vectors", "file_extracted_data", b"file_extracted_data", "file_extracted_data_wrapped", b"file_extracted_data_wrapped", "files", b"files", "kbid", b"kbid", "keywordsets", b"keywordsets", "layouts", b"layouts", "link_extracted_data", b"link_extracted_data", "link_extracted_data_wrapped", b"link_extracted_data_wrapped", "links", b"links", "multiid", b"multiid", "origin", b"origin", "origin_seq", b"origin_seq", "pre_processing_time", b"pre_processing_time", "processing_id", b"processing_id", "reindex", b"reindex", "relations", b"relations", "slow_processing_time", b"slow_processing_time", "slug", b"slug", "source", b"source", "texts", b"texts", "txseqid", b"txseqid", "type", b"type", "user_vectors", b"user_vectors", "uuid", b"uuid"]) -> None: ...
 
 global___BrokerMessage = BrokerMessage
 

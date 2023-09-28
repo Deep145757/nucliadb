@@ -83,10 +83,13 @@ pub struct BrokerMessage {
     /// Field File
     #[prost(map="string, message", tag="17")]
     pub files: ::std::collections::HashMap<::prost::alloc::string::String, super::resources::FieldFile>,
-    /// Link extracted extra info
+    /// DEPRECATED Link extracted extra info
+    /// USE NEW WRAPPED field: link_extracted_data_wrapped
     #[prost(message, repeated, tag="18")]
     pub link_extracted_data: ::prost::alloc::vec::Vec<super::resources::LinkExtractedData>,
-    /// File extracted extra info
+    /// DEPRECATED File extracted extra info
+    /// USE NEW WRAPPED field: file_extracted_data_wrapped
+    #[deprecated]
     #[prost(message, repeated, tag="19")]
     pub file_extracted_data: ::prost::alloc::vec::Vec<super::resources::FileExtractedData>,
     /// Field Extracted/Computed information
@@ -128,6 +131,12 @@ pub struct BrokerMessage {
     pub reindex: bool,
     #[prost(message, optional, tag="37")]
     pub extra: ::core::option::Option<super::resources::Extra>,
+    /// Link extracted extra info
+    #[prost(message, repeated, tag="38")]
+    pub link_extracted_data_wrapped: ::prost::alloc::vec::Vec<super::resources::LinkExtractedDataWrapper>,
+    /// File extracted extra info
+    #[prost(message, repeated, tag="39")]
+    pub file_extracted_data_wrapped: ::prost::alloc::vec::Vec<super::resources::FileExtractedDataWrapper>,
 }
 /// Nested message and enum types in `BrokerMessage`.
 pub mod broker_message {

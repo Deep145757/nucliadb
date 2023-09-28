@@ -681,6 +681,31 @@ class FileExtractedData(google.protobuf.message.Message):
 global___FileExtractedData = FileExtractedData
 
 @typing_extensions.final
+class FileExtractedDataWrapper(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FIELD_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    FILE_FIELD_NUMBER: builtins.int
+    field: builtins.str
+    @property
+    def data(self) -> global___FileExtractedData: ...
+    @property
+    def file(self) -> global___CloudFile: ...
+    def __init__(
+        self,
+        *,
+        field: builtins.str = ...,
+        data: global___FileExtractedData | None = ...,
+        file: global___CloudFile | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["data", b"data", "file", b"file", "file_or_data", b"file_or_data"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["data", b"data", "field", b"field", "file", b"file", "file_or_data", b"file_or_data"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["file_or_data", b"file_or_data"]) -> typing_extensions.Literal["data", "file"] | None: ...
+
+global___FileExtractedDataWrapper = FileExtractedDataWrapper
+
+@typing_extensions.final
 class LinkExtractedData(google.protobuf.message.Message):
     DESCRIPTOR: google.protobuf.descriptor.Descriptor
 
@@ -750,6 +775,31 @@ class LinkExtractedData(google.protobuf.message.Message):
     def ClearField(self, field_name: typing_extensions.Literal["date", b"date", "description", b"description", "embed", b"embed", "field", b"field", "language", b"language", "link_image", b"link_image", "link_preview", b"link_preview", "link_thumbnail", b"link_thumbnail", "metadata", b"metadata", "pdf_structure", b"pdf_structure", "title", b"title", "type", b"type"]) -> None: ...
 
 global___LinkExtractedData = LinkExtractedData
+
+@typing_extensions.final
+class LinkExtractedDataWrapper(google.protobuf.message.Message):
+    DESCRIPTOR: google.protobuf.descriptor.Descriptor
+
+    FIELD_FIELD_NUMBER: builtins.int
+    DATA_FIELD_NUMBER: builtins.int
+    FILE_FIELD_NUMBER: builtins.int
+    field: builtins.str
+    @property
+    def data(self) -> global___LinkExtractedData: ...
+    @property
+    def file(self) -> global___CloudFile: ...
+    def __init__(
+        self,
+        *,
+        field: builtins.str = ...,
+        data: global___LinkExtractedData | None = ...,
+        file: global___CloudFile | None = ...,
+    ) -> None: ...
+    def HasField(self, field_name: typing_extensions.Literal["data", b"data", "file", b"file", "file_or_data", b"file_or_data"]) -> builtins.bool: ...
+    def ClearField(self, field_name: typing_extensions.Literal["data", b"data", "field", b"field", "file", b"file", "file_or_data", b"file_or_data"]) -> None: ...
+    def WhichOneof(self, oneof_group: typing_extensions.Literal["file_or_data", b"file_or_data"]) -> typing_extensions.Literal["data", "file"] | None: ...
+
+global___LinkExtractedDataWrapper = LinkExtractedDataWrapper
 
 @typing_extensions.final
 class ExtractedTextWrapper(google.protobuf.message.Message):

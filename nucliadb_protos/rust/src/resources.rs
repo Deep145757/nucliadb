@@ -245,6 +245,23 @@ pub struct FileExtractedData {
     pub nested_list_position: ::std::collections::HashMap<::prost::alloc::string::String, NestedListPosition>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
+pub struct FileExtractedDataWrapper {
+    #[prost(string, tag="1")]
+    pub field: ::prost::alloc::string::String,
+    #[prost(oneof="file_extracted_data_wrapper::FileOrData", tags="2, 3")]
+    pub file_or_data: ::core::option::Option<file_extracted_data_wrapper::FileOrData>,
+}
+/// Nested message and enum types in `FileExtractedDataWrapper`.
+pub mod file_extracted_data_wrapper {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum FileOrData {
+        #[prost(message, tag="2")]
+        Data(super::FileExtractedData),
+        #[prost(message, tag="3")]
+        File(super::CloudFile),
+    }
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct LinkExtractedData {
     #[prost(message, optional, tag="1")]
     pub date: ::core::option::Option<::prost_types::Timestamp>,
@@ -270,6 +287,23 @@ pub struct LinkExtractedData {
     pub embed: ::prost::alloc::string::String,
     #[prost(message, optional, tag="13")]
     pub pdf_structure: ::core::option::Option<PageStructure>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct LinkExtractedDataWrapper {
+    #[prost(string, tag="1")]
+    pub field: ::prost::alloc::string::String,
+    #[prost(oneof="link_extracted_data_wrapper::FileOrData", tags="2, 3")]
+    pub file_or_data: ::core::option::Option<link_extracted_data_wrapper::FileOrData>,
+}
+/// Nested message and enum types in `LinkExtractedDataWrapper`.
+pub mod link_extracted_data_wrapper {
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum FileOrData {
+        #[prost(message, tag="2")]
+        Data(super::LinkExtractedData),
+        #[prost(message, tag="3")]
+        File(super::CloudFile),
+    }
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExtractedTextWrapper {
