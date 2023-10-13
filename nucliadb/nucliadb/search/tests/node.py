@@ -46,11 +46,12 @@ images.settings["nucliadb_node_reader"] = {
         "NUCLIADB_DISABLE_TELEMETRY": "True",
         "LAZY_LOADING": "true",
         "RUST_BACKTRACE": "full",
-        "RUST_LOG": "nucliadb_node=DEBUG,nucliadb_vectors=DEBUG,nucliadb_fields_tantivy=DEBUG,nucliadb_paragraphs_tantivy=DEBUG",  # noqa
+        "RUST_LOG": "nucliadb_node=DEBUG,nucliadb_paragraphs=DEBUG,nucliadb_vectors=DEBUG,nucliadb_texts=DEBUG,nucliadb_relations=DEBUG",  # noqa
     },
     "options": {
         "command": [
             "/usr/local/bin/node_reader",
+            #            "/usr/local/bin/samply record --save-only -o prof.json -- node_reader",
         ],
         "ports": {"4445": None},
         "mem_limit": "2g",  # default is 1g, need to override
@@ -67,7 +68,7 @@ images.settings["nucliadb_node_writer"] = {
         "WRITER_LISTEN_ADDRESS": "0.0.0.0:4446",
         "NUCLIADB_DISABLE_TELEMETRY": "True",
         "RUST_BACKTRACE": "full",
-        "RUST_LOG": "nucliadb_node=DEBUG,nucliadb_vectors=DEBUG,nucliadb_fields_tantivy=DEBUG,nucliadb_paragraphs_tantivy=DEBUG",  # noqa
+        "RUST_LOG": "nucliadb_node=DEBUG,nucliadb_paragraphs=DEBUG,nucliadb_vectors=DEBUG,nucliadb_texts=DEBUG,nucliadb_relations=DEBUG",  # noqa
     },
     "options": {
         "command": [
@@ -344,6 +345,7 @@ def _node(natsd: str, gcs: str):
     try:
         cluster_info = nr.start()
     except Exception:
+        breakpoint()
         nr.stop()
         raise
     nr.setup_env()
