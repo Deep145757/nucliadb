@@ -15,8 +15,12 @@ async def test_node_performance_bottleneck(search_api, multiple_search_resource)
 
         async def find_request():
             start = time.perf_counter()
-            resp = await client.get(
-                f"/kb/{kbid}/find", params={"query": fake.sentence()}
+            resp = await client.post(
+                f"/kb/{kbid}/find",
+                json={
+                    "query": fake.sentence(),
+                    "features": ["vector", "paragraph", "relations"],
+                },
             )
             assert resp.status_code == 200
             duration = time.perf_counter() - start
@@ -36,7 +40,7 @@ async def test_node_performance_bottleneck(search_api, multiple_search_resource)
             await suggest_request()
             await find_request()
 
-        for n_sessions in [500, 750, 1000]:
+        for n_sessions in [200, 300, 400, 500, 750, 1000]:
             aws = [asyncio.create_task(find_session()) for _ in range(n_sessions)]
             done, _ = await asyncio.wait(aws)
             for task in done:
