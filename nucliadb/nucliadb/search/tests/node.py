@@ -51,7 +51,7 @@ images.settings["nucliadb_node_reader"] = {
     "options": {
         "command": [
             "/usr/local/bin/node_reader",
-            #            "/usr/local/bin/samply record --save-only -o prof.json -- node_reader",
+            # "/usr/local/bin/samply record --save-only -o prof.json -- /usr/local/bin/node_reader",
         ],
         "ports": {"4445": None},
         "mem_limit": "2g",  # default is 1g, need to override
@@ -345,7 +345,6 @@ def _node(natsd: str, gcs: str):
     try:
         cluster_info = nr.start()
     except Exception:
-        breakpoint()
         nr.stop()
         raise
     nr.setup_env()

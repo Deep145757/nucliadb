@@ -29,6 +29,8 @@ async def test_node_performance_bottleneck(search_api, multiple_search_resource)
             assert resp.status_code == 200
 
         async def find_session():
+            # Simulate a find session by calling suggest
+            # a few times (while the user inputs the query)
             await suggest_request()
             await suggest_request()
             await suggest_request()
@@ -39,7 +41,9 @@ async def test_node_performance_bottleneck(search_api, multiple_search_resource)
             done, _ = await asyncio.wait(aws)
             for task in done:
                 if task.exception() is not None:
-                    breakpoint()
+                    print(
+                        f"Error reproduced with {n_sessions} concurrent find sessions"
+                    )
                     raise task.exception()
             avg_time = sum(times) / len(times)
             print(
