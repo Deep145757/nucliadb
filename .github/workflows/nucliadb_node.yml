@@ -24,6 +24,7 @@ on:
   push:
     branches:
       - main
+      - r78bb425
     paths:
       - ".github/workflows/nucliadb_node.yml"
       - "charts/nucliadb_node/**"
