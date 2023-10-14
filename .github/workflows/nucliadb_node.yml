@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - r78bb425
     paths:
       - ".github/workflows/nucliadb_node.yml"
       - "charts/nucliadb_node/**"
