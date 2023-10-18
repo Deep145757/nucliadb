@@ -267,7 +267,10 @@ class Worker:
     async def set_resource(self, pb: IndexMessage) -> OpStatus:
         self.brain = await self.storage.get_indexing(pb)
         self.brain.shard_id = self.brain.resource.shard_id = pb.shard
-        if self.brain.resource.uuid == "c6e7bd27a0d45587cc766910f00557ea":
+        if self.brain.resource.uuid in (
+            "c6e7bd27a0d45587cc766910f00557ea",
+            "41e14af01fd7668d2f2c19a3f37de9e7",
+        ):
             print("Skipping message")
             return OpStatus()
         logger.info(
