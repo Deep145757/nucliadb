@@ -734,6 +734,7 @@ class Resource:
 
     @processor_observer.wrap({"type": "apply_fields"})
     async def apply_fields(self, message: BrokerMessage):
+        # TODO: read the QA block here
         message_updated_fields = []
         for field, layout in message.layouts.items():
             fid = FieldID(field_type=FieldType.LAYOUT, field=field)
