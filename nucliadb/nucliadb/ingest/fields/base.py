@@ -33,6 +33,7 @@ from nucliadb_protos.resources_pb2 import (
     LargeComputedMetadataWrapper,
     UserVectorsWrapper,
     FieldQuestionAnswerWrapper,
+    QuestionAnswers,
 )
 from nucliadb_protos.utils_pb2 import (
     ExtractedText,
@@ -58,6 +59,7 @@ class FieldTypes(str, enum.Enum):
     FIELD_METADATA = "metadata"
     FIELD_LARGE_METADATA = "large_metadata"
     THUMBNAIL = "thumbnail"
+    QUESTION_ANSWERS = "question_answers"
 
 
 class Field:
@@ -69,6 +71,7 @@ class Field:
     computed_metadata: Optional[FieldComputedMetadata]
     large_computed_metadata: Optional[LargeComputedMetadata]
     extracted_user_vectors: Optional[UserVectorSet]
+    question_answers: Optional[QuestionAnswers]
 
     def __init__(
         self,
@@ -86,6 +89,7 @@ class Field:
         self.computed_metadata = None
         self.large_computed_metadata = None
         self.extracted_user_vectors = None
+        self.question_answers = None
 
         self.id: str = id
         self.resource: Any = resource
@@ -198,7 +202,19 @@ class Field:
         )
 
     async def set_question_answers(self, payload: FieldQuestionAnswerWrapper) -> None:
-        raise NotImplementedError
+        # TODO: what about actual value
+        sf = self.get_storage_field(FieldTypes.QUESTION_ANSWERS)
+
+        if payload.HasField("file"):
+            raw_payload = await self.storage.downloadbytescf(payload.file)
+            pb = QuestionAnswers()
+            pb.ParseFromString(raw_payload.read())
+            raw_payload.flush()
+            self.question_answers = pb
+        else:
+            self.question_answers = payload.question_answers
+
+        await self.storage.upload_pb(sf, self.question_answers)
 
     async def set_extracted_text(self, payload: ExtractedTextWrapper) -> None:
         if self.type in SUBFIELDFIELDS:
