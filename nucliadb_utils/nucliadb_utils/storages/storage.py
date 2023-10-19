@@ -357,6 +357,8 @@ class Storage:
         self, kbid: str, uuid: str, field_type: str, field: str, key: str
     ) -> StorageField:
         # Its a file field value
+        # TODO: deal with Q/A here?
+
         bucket = self.get_bucket_name(kbid)
         key = STORAGE_FILE_EXTRACTED.format(
             kbid=kbid, uuid=uuid, field_type=field_type, field=field, key=key
