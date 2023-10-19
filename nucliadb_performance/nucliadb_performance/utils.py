@@ -130,6 +130,41 @@ def get_kb(kbid):
     print(f"Starting search kb test on {kbid} with {paragraphs} paragraphs")
 
 
+@cache_to_disk
+def get_n_entities(kbid, n=100):
+    "Gets the most k frequent entities"
+    entities = []
+    ndb = NucliaDB(
+        url=get_search_api_url(),
+        headers={"X-NUCLIADB-ROLES": "READER"},
+    )
+    resp = ndb.session.get(
+        f"/v1/kb/{kbid}/catalog",
+        params={"faceted": ["/e"], "features": ["document"], "page_size": 0},
+    )
+    assert resp.status_code == 200
+    content = resp.json()
+    facets = content["fulltext"]["facets"]
+    families = list(facets.get("/e", {}).items())
+    if len(families) == 0:
+        return []
+    random.shuffle(families)
+    for family, _ in families:
+        resp = ndb.session.get(
+            f"/v1/kb/{kbid}/catalog",
+            params={"faceted": [family], "features": ["document"], "page_size": 0},
+        )
+        assert resp.status_code == 200
+        content = resp.json()
+        ents = list(content["fulltext"]["facets"][family].items())
+        random.shuffle(ents)
+        for ent, _ in ents:
+            entities.append(ent)
+            if len(entities) >= n:
+                return entities
+    return entities
+
+
 class CountersError(Exception):
     ...
 
