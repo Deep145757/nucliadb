@@ -32,6 +32,7 @@ from nucliadb_protos.resources_pb2 import (
     LargeComputedMetadata,
     LargeComputedMetadataWrapper,
     UserVectorsWrapper,
+    FieldQuestionAnswerWrapper,
 )
 from nucliadb_protos.utils_pb2 import (
     ExtractedText,
@@ -195,6 +196,9 @@ class Field:
             ),
             error.SerializeToString(),
         )
+
+    async def set_question_answers(self, payload: FieldQuestionAnswerWrapper) -> None:
+        raise NotImplementedError
 
     async def set_extracted_text(self, payload: ExtractedTextWrapper) -> None:
         if self.type in SUBFIELDFIELDS:
