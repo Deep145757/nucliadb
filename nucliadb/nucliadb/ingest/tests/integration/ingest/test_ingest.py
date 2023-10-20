@@ -499,6 +499,22 @@ async def test_ingest_audit_stream_files_only(
 
 
 @pytest.mark.asyncio
+async def test_qa(
+    local_files,
+    gcs_storage: Storage,
+    cache,
+    fake_node,
+    stream_processor,
+    stream_audit: StreamAuditStorage,
+    test_resource: Resource,
+):
+    import pdb
+
+    pdb.set_trace()
+    # XXX check if the QA was stored in GCS here, by downloading it
+
+
+@pytest.mark.asyncio
 async def test_ingest_audit_stream_mixed(
     local_files,
     gcs_storage: Storage,
