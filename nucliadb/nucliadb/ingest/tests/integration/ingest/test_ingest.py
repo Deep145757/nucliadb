@@ -41,6 +41,8 @@ from nucliadb_protos.resources_pb2 import (
     FieldType,
     FileExtractedData,
     LargeComputedMetadataWrapper,
+    QuestionAnswer,
+    FieldQuestionAnswerWrapper,
 )
 from nucliadb_protos.resources_pb2 import Metadata as PBMetadata
 from nucliadb_protos.resources_pb2 import Origin, Paragraph
@@ -508,10 +510,36 @@ async def test_qa(
     stream_audit: StreamAuditStorage,
     test_resource: Resource,
 ):
+    kbid = test_resource.kb.kbid
+    rid = test_resource.uuid
+    driver = stream_processor.driver
+    message = make_message(kbid, rid)
+    message.account_seq = 2
+
+    qaw = FieldQuestionAnswerWrapper()
+
+    for i in range(10):
+        qa = QuestionAnswer()
+        qa.question = f"My question {i}"
+        qa.question_language = "catalan"
+        qa.answer = f"My answer {i}"
+        qa.answer_language = "catalan"
+        qa.paragraph_ids.extend([f"id1/{i}", f"id2/{i}"])
+        qaw.question_answers.question_answer.append(qa)
+
+    message.question_answers.append(qaw)
+
+    await stream_processor.process(message=message, seqid=1)
+
+    # XXX check if the QA was stored in GCS here, by downloading it
+    async with driver.transaction() as txn:
+        kb_obj = KnowledgeBox(txn, gcs_storage, kbid=kbid)
+        r = await kb_obj.get(message.uuid)
+        assert r is not None
+        basic = await r.get_basic()
     import pdb
 
     pdb.set_trace()
-    # XXX check if the QA was stored in GCS here, by downloading it
 
 
 @pytest.mark.asyncio
