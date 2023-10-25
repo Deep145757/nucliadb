@@ -530,16 +530,21 @@ async def test_qa(
     message.question_answers.append(qaw)
 
     await stream_processor.process(message=message, seqid=1)
+    import pdb
+
+    pdb.set_trace()
 
     # XXX check if the QA was stored in GCS here, by downloading it
     async with driver.transaction() as txn:
         kb_obj = KnowledgeBox(txn, gcs_storage, kbid=kbid)
         r = await kb_obj.get(message.uuid)
         assert r is not None
-        basic = await r.get_basic()
     import pdb
 
     pdb.set_trace()
+    ids = await r.get_all_field_ids()
+
+    stored_qas = await r.get_question_answers()
 
 
 @pytest.mark.asyncio

@@ -201,6 +201,9 @@ class Field:
             error.SerializeToString(),
         )
 
+    async def get_question_answers(self) -> Optional[QuestionAnswers]:
+        XXX
+
     async def set_question_answers(self, payload: FieldQuestionAnswerWrapper) -> None:
         # TODO: what about actual value
         sf = self.get_storage_field(FieldTypes.QUESTION_ANSWERS)

@@ -215,6 +215,7 @@ async def serialize(
 
     include_errors = ResourceProperties.ERRORS in show
 
+    # XXX
     if field_type_filter and (include_values or include_extracted_data):
         await orm_resource.get_fields()
         resource.data = ResourceData()
@@ -432,6 +433,8 @@ async def serialize(
                             text=resource.data.generics[field.id].value
                         )
                     )
+            # XXX add Q/A
+
     asyncio.create_task(txn.abort())
     return resource
 
