@@ -450,9 +450,6 @@ class KnowledgeBox:
         return None
 
     async def get(self, uuid: str) -> Optional[Resource]:
-        import pdb
-
-        pdb.set_trace()
         raw_basic = await get_basic(self.txn, self.kbid, uuid)
         if raw_basic:
             return Resource(
