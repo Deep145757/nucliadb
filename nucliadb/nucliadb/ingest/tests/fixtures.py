@@ -695,11 +695,16 @@ async def create_resource(
     question_answers = rpb.FieldQuestionAnswerWrapper()
     for i in range(10):
         qa = rpb.QuestionAnswer()
-        qa.question = f"My question {i}"
-        qa.question_language = "catalan"
-        qa.answer = f"My answer {i}"
-        qa.answer_language = "catalan"
-        qa.paragraph_ids.extend([f"id1/{i}", f"id2/{i}"])
+
+        qa.question.text = f"My question {i}"
+        qa.question.language = "catalan"
+        qa.question.ids_paragraphs.extend([f"id1/{i}", f"id2/{i}"])
+
+        answer = rpb.Answers()
+        answer.text = f"My answer {i}"
+        answer.language = "catalan"
+        answer.ids_paragraphs.extend([f"id1/{i}", f"id2/{i}"])
+        qa.answers.append(answer)
         question_answers.question_answers.question_answer.append(qa)
 
     await field_obj.set_question_answers(question_answers)

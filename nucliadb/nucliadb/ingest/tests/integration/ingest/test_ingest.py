@@ -33,6 +33,7 @@ from nucliadb_protos.resources_pb2 import (
     TEXT,
     Classification,
     CloudFile,
+    Answers,
     Entity,
     ExtractedTextWrapper,
     ExtractedVectorsWrapper,
@@ -515,36 +516,40 @@ async def test_qa(
     driver = stream_processor.driver
     message = make_message(kbid, rid)
     message.account_seq = 2
+    message.files["qa"].file.uri = "http://something"
+    message.files["qa"].file.size = 123
+    message.files["qa"].file.source = CloudFile.Source.LOCAL
 
     qaw = FieldQuestionAnswerWrapper()
+    qaw.field.field_type = FieldType.FILE
+    qaw.field.field = "qa"
 
     for i in range(10):
         qa = QuestionAnswer()
-        qa.question = f"My question {i}"
-        qa.question_language = "catalan"
-        qa.answer = f"My answer {i}"
-        qa.answer_language = "catalan"
-        qa.paragraph_ids.extend([f"id1/{i}", f"id2/{i}"])
+
+        qa.question.text = f"My question {i}"
+        qa.question.language = "catalan"
+        qa.question.ids_paragraphs.extend([f"id1/{i}", f"id2/{i}"])
+
+        answer = Answers()
+        answer.text = f"My answer {i}"
+        answer.language = "catalan"
+        answer.ids_paragraphs.extend([f"id1/{i}", f"id2/{i}"])
+        qa.answers.append(answer)
         qaw.question_answers.question_answer.append(qa)
 
     message.question_answers.append(qaw)
 
     await stream_processor.process(message=message, seqid=1)
-    import pdb
 
-    pdb.set_trace()
-
-    # XXX check if the QA was stored in GCS here, by downloading it
     async with driver.transaction() as txn:
         kb_obj = KnowledgeBox(txn, gcs_storage, kbid=kbid)
         r = await kb_obj.get(message.uuid)
         assert r is not None
-    import pdb
+        res = await r.get_field(key="qa", type=FieldType.FILE)
+        res_qa = await res.get_question_answers()
 
-    pdb.set_trace()
-    ids = await r.get_all_field_ids()
-
-    stored_qas = await r.get_question_answers()
+    assert qaw.question_answers == res_qa
 
 
 @pytest.mark.asyncio

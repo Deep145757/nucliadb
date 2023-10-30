@@ -204,7 +204,7 @@ class Field:
     async def get_question_answers(self) -> Optional[QuestionAnswers]:
         if self.question_answers is None:
             sf = self.get_storage_field(FieldTypes.QUESTION_ANSWERS)
-            payload = await self.storage.download_pb(sf, ExtractedText)
+            payload = await self.storage.download_pb(sf, QuestionAnswers)
             if payload is not None:
                 self.question_answers = payload
         return self.question_answers
