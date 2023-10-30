@@ -202,10 +202,14 @@ class Field:
         )
 
     async def get_question_answers(self) -> Optional[QuestionAnswers]:
-        XXX
+        if self.question_answers is None:
+            sf = self.get_storage_field(FieldTypes.QUESTION_ANSWERS)
+            payload = await self.storage.download_pb(sf, ExtractedText)
+            if payload is not None:
+                self.question_answers = payload
+        return self.question_answers
 
     async def set_question_answers(self, payload: FieldQuestionAnswerWrapper) -> None:
-        # TODO: what about actual value
         sf = self.get_storage_field(FieldTypes.QUESTION_ANSWERS)
 
         if payload.HasField("file"):
